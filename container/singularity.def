@@ -1,0 +1,36 @@
+Bootstrap: docker
+From: tensorflow/tensorflow:2.17.0-gpu
+
+%post
+    # Update and install basic tools
+    apt-get update && apt-get install -y \
+        build-essential \
+        curl \
+        git \
+        libgl1-mesa-glx \
+        python3-venv \
+        python3-pip \
+        graphviz \
+        && rm -rf /var/lib/apt/lists/*
+
+    # Create a virtual environment and install dependencies
+    pip install --upgrade pip
+    python3 -m venv /opt/venv
+    . /opt/venv/bin/activate
+    pip install -r /opt/requirements.txt
+
+    # Clean up Cache
+    find /opt/venv/lib/python3.*/site-packages -name "*.txt" -delete
+    find /opt/venv/lib/python3.*/site-packages -name "*.md" -delete
+    find /opt/venv -name "*.pyc" -delete
+    find /opt/venv -name "__pycache__" -delete
+
+%files
+    ../requirements.txt /opt/requirements.txt
+
+%environment
+    export PATH=/opt/venv/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+%runscript
+    exec python3 "$@"
